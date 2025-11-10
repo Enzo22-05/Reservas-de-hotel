@@ -9,88 +9,87 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Base de datos SQLite (sin cambios)
+// Crear o conectar la base de datos SQLite
 const db = new sqlite3.Database("reservas.db");
 
-// Crear tabla si no existe (sin cambios)
+// Crear la tabla si no existe
+
 db.run(`
   CREATE TABLE IF NOT EXISTS appointments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room INTEGER,
-    start TEXT,
-    end TEXT
+    startDate TEXT,
+    endDate TEXT
   )
 `);
 
-// Obtener todas las reservas (sin cambios)
+// Obtener todas las reservas
 app.get("/appointments", (req, res) => {
   db.all("SELECT * FROM appointments", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+    if (err) {
+      console.error("Error al obtener reservas:", err);
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json(rows);
+    }
   });
 });
 
-// Crear nueva reserva (sin cambios)
+// Crear una nueva reserva
 app.post("/appointments", (req, res) => {
-  const { room, start, end } = req.body;
+  const { room, startDate, endDate } = req.body;
+  if (!room || !startDate || !endDate) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
   db.run(
-    "INSERT INTO appointments (room, start, end) VALUES (?, ?, ?)",
-    [room, start, end],
+    "INSERT INTO appointments (room, startDate, endDate) VALUES (?, ?, ?)",
+    [room, startDate, endDate],
     function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, room, start, end });
+      if (err) {
+        console.error("Error al guardar reserva:", err);
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ id: this.lastID, room, startDate, endDate });
+      }
     }
   );
 });
 
-// Editar reserva (sin cambios)
+// Editar una reserva existente
 app.put("/appointments/:id", (req, res) => {
   const { id } = req.params;
-  const { room, start, end } = req.body;
+  const { room, startDate, endDate } = req.body;
+
   db.run(
-    "UPDATE appointments SET room = ?, start = ?, end = ? WHERE id = ?",
-    [room, start, end, id],
+    "UPDATE appointments SET room = ?, startDate = ?, endDate = ? WHERE id = ?",
+    [room, startDate, endDate, id],
     function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id, room, start, end });
+      if (err) {
+        console.error("Error al actualizar reserva:", err);
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ updated: this.changes });
+      }
     }
   );
 });
 
-// Eliminar reserva (sin cambios)
+// Eliminar una reserva
 app.delete("/appointments/:id", (req, res) => {
   const { id } = req.params;
   db.run("DELETE FROM appointments WHERE id = ?", [id], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true });
+    if (err) {
+      console.error("Error al eliminar reserva:", err);
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ deleted: this.changes });
+    }
   });
 });
 
-
-// server.js (Sección de configuración del Frontend)
-
-// ... todas tus rutas de API GET, POST, PUT, DELETE ...
-
-// ----------------------------------------------------
-// --- CONFIGURACIÓN PARA SERVIR EL FRONTEND COMPILADO ---
-// ----------------------------------------------------
-
-// 1. Sirve los archivos estáticos (JS, CSS, etc.)
-app.use(express.static(path.join(__dirname, 'build')));
-
-// 2. Maneja todas las demás peticiones GET (SPA - Usando un parámetro capturado)
-// El '/*' o '*' suele fallar; esta es la solución más segura.
-app.get('/:path', function (req, res) { 
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// Iniciar el servidor en el puerto 3001
+const PORT = 3001;
+app.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
 });
-
-// ----------------------------------------------------
-
-app.listen(5000, () => console.log("Servidor corriendo en puerto 5000"));
-
-// server.js (casi al final)
-
-// Usa la variable de entorno PORT si existe (lo que hace el servidor de hosting), sino usa 5000
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

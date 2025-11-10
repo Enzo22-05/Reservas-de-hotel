@@ -8,124 +8,113 @@ const CalendarBooking = () => {
   const [appointments, setAppointments] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(1);
 
-  // Cargar reservas desde backend
+  // 🟢 Cargar reservas desde el backend al iniciar
   useEffect(() => {
-    // Usando ruta relativa para unificación: /appointments
-    fetch("/appointments") 
+    fetch("http://localhost:3001/appointments")
       .then((res) => res.json())
       .then((data) => setAppointments(data))
-      .catch((error) => console.error("Error al cargar citas:", error)); 
+      .catch((err) => console.error("Error al cargar reservas:", err));
   }, []);
 
-  // *** NOTA: La función getDisabledDates ha sido eliminada. ***
+  // 🟢 Manejar selección de fechas
+  const handleDateChange = (range) => {
+    setSelectedRange(range);
+  };
 
-  const handleBooking = () => {
-    if (!selectedRange || selectedRange.length !== 2) {
-      alert("Seleccione un rango de días primero");
+  // 🟢 Agendar reserva (enviar al backend)
+  const handleAddAppointment = async () => {
+    if (!selectedRange || !Array.isArray(selectedRange)) {
+      alert("Selecciona un rango de fechas válido.");
       return;
     }
 
-    const [startDate, endDate] = selectedRange;
-    const newAppointment = {
-      room: selectedRoom,
-      start: startDate.toLocaleDateString("es-ES"),
-      end: endDate.toLocaleDateString("es-ES"),
-    };
+    const [start, end] = selectedRange;
+    const startDate = start.toISOString().split("T")[0];
+    const endDate = end.toISOString().split("T")[0];
 
-    fetch("/appointments", { 
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newAppointment),
-    })
-      .then((res) => res.json())
-      .then((data) => setAppointments([...appointments, data]))
-      .catch((error) => console.error("Error al crear cita:", error));
+    try {
+      const res = await fetch("http://localhost:3001/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: selectedRoom,
+          startDate,
+          endDate,
+        }),
+      });
 
-    setSelectedRange(null);
+      if (!res.ok) throw new Error("Error al guardar la reserva");
+
+      const newAppointment = await res.json();
+      setAppointments((prev) => [...prev, newAppointment]);
+      alert("✅ Reserva guardada con éxito!");
+    } catch (error) {
+      console.error("Error al agendar:", error);
+      alert("❌ Error al agendar la reserva.");
+    }
   };
 
-  const handleDelete = (id) => {
-    fetch(`/appointments/${id}`, { method: "DELETE" }) 
-      .then(() => setAppointments(appointments.filter((a) => a.id !== id)))
-      .catch((error) => console.error("Error al eliminar cita:", error));
-  };
+  // 🟢 Eliminar reserva
+  const handleDeleteAppointment = async (id) => {
+    if (!window.confirm("¿Eliminar esta reserva?")) return;
 
-  const handleEdit = (id) => {
-    const appt = appointments.find((a) => a.id === id);
-    if (!appt) return;
-
-    const start = prompt("Nueva fecha de inicio (dd/mm/yyyy):", appt.start);
-    const end = prompt("Nueva fecha de fin (dd/mm/yyyy):", appt.end);
-    const room = prompt("Nueva habitación (1-8):", appt.room);
-
-    if (!start || !end || !room) return;
-
-    const updatedAppointment = { room: parseInt(room), start, end };
-
-    fetch(`/appointments/${id}`, { 
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedAppointment),
-    })
-      .then(() => {
-        setAppointments(
-          appointments.map((a) => (a.id === id ? { id, ...updatedAppointment } : a))
-        );
-      })
-      .catch((error) => console.error("Error al editar cita:", error));
+    try {
+      await fetch(`http://localhost:3001/appointments/${id}`, {
+        method: "DELETE",
+      });
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+    }
   };
 
   return (
     <div className="calendar-container">
-      <h2>Calendario de Reservas</h2>
+      <h1>📅 Reservas del Hotel</h1>
 
-      <Calendar
-        selectRange={true}
-        onChange={setSelectedRange}
-        value={selectedRange}
-        // *** IMPORTANTE: La propiedad tileDisabled ha sido eliminada por completo. ***
-      />
+      <div className="calendar-section">
+        <Calendar
+          onChange={handleDateChange}
+          selectRange={true}
+          value={selectedRange}
+        />
+      </div>
 
-      {selectedRange && selectedRange.length === 2 && (
-        <div className="booking-section">
-          <p>
-            Reservar del <strong>{selectedRange[0].toDateString()}</strong> al{" "}
-            <strong>{selectedRange[1].toDateString()}</strong>
-          </p>
+      <div className="controls">
+        <label>
+          Habitación:
+          <select
+            value={selectedRoom}
+            onChange={(e) => setSelectedRoom(Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label>
-            Seleccione habitación:
-            <select
-              value={selectedRoom}
-              onChange={(e) => setSelectedRoom(parseInt(e.target.value))}
-            >
-              {Array.from({ length: 8 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  Habitación {num}
-                </option>
-              ))}
-            </select>
-          </label>
+        <button onClick={handleAddAppointment}>Agendar reserva</button>
+      </div>
 
-          <button onClick={handleBooking}>Agendar Reserva</button>
-        </div>
-      )}
-
-      <h3>Turnos Agendados</h3>
-      {appointments.length === 0 ? (
-        <p>No hay turnos agendados.</p>
-      ) : (
-        <ul className="appointments-list">
-          {appointments.map((appt) => (
-            <li key={appt.id}>
-              Habitación <strong>{appt.room}</strong>: del <strong>{appt.start}</strong> al{" "}
-              <strong>{appt.end}</strong>{" "}
-              <button onClick={() => handleEdit(appt.id)}>Editar</button>{" "}
-              <button onClick={() => handleDelete(appt.id)}>Eliminar</button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="appointments-list">
+        <h2>Reservas existentes</h2>
+        {appointments.length === 0 ? (
+          <p>No hay reservas aún.</p>
+        ) : (
+          <ul>
+            {appointments.map((a) => (
+              <li key={a.id}>
+                🏨 Habitación {a.room} — {a.startDate} → {a.endDate}
+                <button onClick={() => handleDeleteAppointment(a.id)}>
+                  ❌ Eliminar
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };
