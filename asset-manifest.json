@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Reservas-de-hotel/static/css/main.6fd59490.css",
+    "main.js": "/Reservas-de-hotel/static/js/main.477e95a5.js",
+    "static/js/453.7ddc7364.chunk.js": "/Reservas-de-hotel/static/js/453.7ddc7364.chunk.js",
+    "index.html": "/Reservas-de-hotel/index.html",
+    "main.6fd59490.css.map": "/Reservas-de-hotel/static/css/main.6fd59490.css.map",
+    "main.477e95a5.js.map": "/Reservas-de-hotel/static/js/main.477e95a5.js.map",
+    "453.7ddc7364.chunk.js.map": "/Reservas-de-hotel/static/js/453.7ddc7364.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6fd59490.css",
+    "static/js/main.477e95a5.js"
+  ]
+}
