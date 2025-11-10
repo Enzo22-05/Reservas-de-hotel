@@ -1,0 +1,49 @@
+/* --- ESTILOS DE DÍAS SELECCIONADOS (MÁXIMA ESPECIFICIDAD) --- */
+
+/* Estilo general para todos los días dentro del rango seleccionado */
+.react-calendar__tile--range:enabled {
+    background-color: #3f60f5 !important; /* Azul más fuerte */
+    color: white !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+    transition: background-color 0.2s;
+  }
+  
+  /* Estilo para el día de inicio del rango */
+  .react-calendar__tile--rangeStart:enabled {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    background-color: #2c44b3 !important; /* Tono más oscuro para el inicio */
+    border: 2px solid white !important;
+    border-right: none !important; 
+  }
+  
+  /* Estilo para el día de fin del rango */
+  .react-calendar__tile--rangeEnd:enabled {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    background-color: #2c44b3 !important; /* Tono más oscuro para el fin */
+    border: 2px solid white !important;
+    border-left: none !important; 
+  }
+  
+  /* Estilo para el día que está "activo" (el que se hizo clic) */
+  .react-calendar__tile--active:enabled {
+    background-color: #2c44b3 !important;
+    color: white !important;
+    box-shadow: 0 0 0 2px #ffc107 inset !important; 
+  }
+  
+  /* Hover: Mantiene el color fuerte al pasar el ratón */
+  .react-calendar__tile--range:enabled:hover,
+  .react-calendar__tile--rangeStart:enabled:hover,
+  .react-calendar__tile--rangeEnd:enabled:hover,
+  .react-calendar__tile--active:enabled:hover {
+    background-color: #253995 !important;
+  }
+  
+  /* Hover: Restaura el color normal para días no seleccionados */
+  .react-calendar__tile:enabled:hover {
+    background-color: #e6e6e6; 
+    color: black;
+  }
